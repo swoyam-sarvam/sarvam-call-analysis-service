@@ -1,0 +1,8 @@
+{
+    "Loop":"Check if there are more than 3 repeated messages from the assistant in the conversation",
+    "OffTopic":"If there are any parts in the conversation where the bots says nonsensical things (e.g. variable spoken out in a context that is not related to the variable's name).",
+    "Date":"Check if any date variable is not in DD/Mon/YYYY format (Note that Month is in a word format like Jan, Feb, Mar, etc.)",
+    "Name":"Check if any name is not in Title Case",
+    "Currency":"Check if any currency variable is not formatted properly in Indian commas. (Indian Commas are like 1,00,000 or 25,000 or 1,000 but not 1000 or 10000)",
+    "PIN":"Check if any PIN code has commas in it."
+}
