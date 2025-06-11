@@ -80,7 +80,6 @@ async def analyze_transcript_with_config(
 
     try:
         async with httpx.AsyncClient() as client:
-            print(OPENAI_API_URL)
             response = await client.post(OPENAI_API_URL, headers=headers, json=data)
             if response.status_code == 200:
                 result = response.json()
@@ -91,7 +90,6 @@ async def analyze_transcript_with_config(
 
                 # Validate that all config keys are present in the result
                 validated_result = validate_response(json_result, config)
-
                 return validated_result
 
             else:

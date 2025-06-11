@@ -26,7 +26,7 @@ def show_home_page():
             df = pd.read_csv(uploaded_file, low_memory=False, dtype=str)
 
             # Check for required columns
-            required_columns = ["User Identifier", "Number of Messages", "Transcript"]
+            required_columns = ["Interaction ID", "Number of Messages", "Transcript"]
             missing_columns = [col for col in required_columns if col not in df.columns]
 
             if missing_columns:
