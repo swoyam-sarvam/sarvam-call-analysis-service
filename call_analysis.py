@@ -11,6 +11,8 @@ load_dotenv()
 # OpenAI API configuration
 SUBSCRIPTION_KEY = os.getenv("AZURE_OPENAI_API_KEY", "none")
 OPENAI_API_URL = os.getenv("OPENAI_API_URL", "none")
+SARVAM_API_URL = os.getenv("SARVAM_API_URL", "none")
+SARVAM_SUBSCRIPTION_KEY = os.getenv("SARVAM_SUBSCRIPTION_KEY", "none")
 
 
 def generate_system_prompt(config: Dict[str, str]) -> str:
@@ -44,7 +46,6 @@ Rules for response:
 
     return prompt
 
-
 async def analyze_transcript_with_config(
     transcript: str, config: Dict[str, str]
 ) -> Dict[str, str]:
@@ -72,15 +73,26 @@ async def analyze_transcript_with_config(
     ]
 
     headers = {
-        "Authorization": f"Bearer {SUBSCRIPTION_KEY}",
+        "api-subscription-key": SARVAM_SUBSCRIPTION_KEY,  # Use correct subscription key
         "Content-Type": "application/json",
     }
 
-    data = {"model": "gpt-4o", "messages": messages, "temperature": 0}
+    data = {"model": "sarvam-m", "messages": messages}
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(OPENAI_API_URL, headers=headers, json=data)
+            response = await client.post(
+                SARVAM_API_URL,
+                headers=headers,
+                json=data,
+                timeout=30.0  # Add timeout
+            )
+            
+            # Print response for debugging
+            print(f"Response status: {response.status_code}")
+            print(f"Response headers: {response.headers}")
+            print(f"Response body: {response.text}")
+            
             if response.status_code == 200:
                 result = response.json()
                 api_response = result["choices"][0]["message"]["content"]
@@ -90,10 +102,12 @@ async def analyze_transcript_with_config(
 
                 # Validate that all config keys are present in the result
                 validated_result = validate_response(json_result, config)
+                await asyncio.sleep(30)
                 return validated_result
 
             else:
                 print(f"Error in API call: {response.status_code}")
+                print(f"Response text: {response.text}")
                 # Return default "no" for all flags in case of API error
                 return {flag: "no" for flag in config.keys()}
 
@@ -101,7 +115,6 @@ async def analyze_transcript_with_config(
         print(f"Exception in API call: {str(e)}")
         # Return default "no" for all flags in case of exception
         return {flag: "no" for flag in config.keys()}
-
 
 def extract_json_from_response(response: str) -> Dict[str, str]:
     """
