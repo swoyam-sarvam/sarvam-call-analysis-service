@@ -9,10 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # OpenAI API configuration
-SUBSCRIPTION_KEY = os.getenv("AZURE_OPENAI_API_KEY", "none")
-OPENAI_API_URL = os.getenv("OPENAI_API_URL", "none")
-SARVAM_API_URL = os.getenv("SARVAM_API_URL", "none")
-SARVAM_SUBSCRIPTION_KEY = os.getenv("SARVAM_SUBSCRIPTION_KEY", "none")
+LLAMA_URL = os.getenv("LLAMA_URL", "none")
+LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "none")
 
 
 def generate_system_prompt(config: Dict[str, str]) -> str:
@@ -72,26 +70,18 @@ async def analyze_transcript_with_config(
         {"role": "user", "content": user_content},
     ]
 
-    headers = {
-        "api-subscription-key": SARVAM_SUBSCRIPTION_KEY,  # Use correct subscription key
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLAMA_API_KEY}"}
 
-    data = {"model": "sarvam-m", "messages": messages}
+    data = {"model": "meta/llama-3.1-70b-instruct", "messages": messages, "stream": False}
 
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                SARVAM_API_URL,
+                LLAMA_URL,
                 headers=headers,
                 json=data,
                 timeout=30.0  # Add timeout
             )
-            
-            # Print response for debugging
-            print(f"Response status: {response.status_code}")
-            print(f"Response headers: {response.headers}")
-            print(f"Response body: {response.text}")
             
             if response.status_code == 200:
                 result = response.json()
@@ -102,7 +92,6 @@ async def analyze_transcript_with_config(
 
                 # Validate that all config keys are present in the result
                 validated_result = validate_response(json_result, config)
-                await asyncio.sleep(30)
                 return validated_result
 
             else:

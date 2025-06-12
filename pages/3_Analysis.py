@@ -86,7 +86,7 @@ def show_analysis_page():
         st.metric("Analysis Parameters", len(config))
 
     with col3:
-        st.metric("Concurrent Tasks", 10)
+        st.metric("Concurrent Tasks", 50)
 
     # Create results dataframe structure
     result_columns = ["Interaction ID"] + list(config.keys())
@@ -138,7 +138,7 @@ def show_analysis_page():
         status_text.text("Starting analysis...")
 
         # Create semaphore for limiting concurrent tasks
-        semaphore = asyncio.Semaphore(10)
+        semaphore = asyncio.Semaphore(50)
 
         # Get transcripts
         transcripts = df["Transcript"].tolist()
