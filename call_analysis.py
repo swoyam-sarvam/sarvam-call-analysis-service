@@ -9,6 +9,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # OpenAI API configuration
+OPENAI_URL = os.getenv("OPENAI_API_URL", "none")
+OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "none")
+
+#Sarvam API configuration
+SARVAM_URL = os.getenv("SARVAM_API_URL", "none")
+SARVAM_API_KEY = os.getenv("SARVAM_SUBSCRIPTION_KEY", "none")
+
+
+# LLAMA API configuration
 LLAMA_URL = os.getenv("LLAMA_URL", "none")
 LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "none")
 
