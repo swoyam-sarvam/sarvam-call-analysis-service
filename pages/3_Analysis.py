@@ -7,7 +7,11 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from call_analysis import analyze_transcript_with_config
+from call_analysis import (
+    analyze_transcript_with_config_llama,
+    analyze_transcript_with_config_gpt4o,
+    analyze_transcript_with_config_sarvam,
+)
 
 # Configure the page
 st.set_page_config(
@@ -34,6 +38,7 @@ if not hasattr(st.session_state, "uploaded_df") or not hasattr(
 async def analyze_transcript_batch(
     transcripts: List[str],
     config: Dict[str, str],
+    model: str,
     semaphore: asyncio.Semaphore,
     progress_callback=None,
 ):
@@ -45,11 +50,23 @@ async def analyze_transcript_batch(
     async def process_single_transcript(idx: int, transcript: str):
         async with semaphore:
             try:
-                result = await analyze_transcript_with_config(transcript, config)
+                if model == "llama":
+                    result = await analyze_transcript_with_config_llama(
+                        transcript, config
+                    )
+                elif model == "gpt4o":
+                    result = await analyze_transcript_with_config_gpt4o(
+                        transcript, config
+                    )
+                else:
+                    result = await analyze_transcript_with_config_sarvam(
+                        transcript, config
+                    )
                 if progress_callback:
                     progress_callback(idx, result)
                 return idx, result
             except Exception as e:
+                st.error(f"Error processing transcript {idx}: {e}")
                 error_result = {key: "error" for key in config.keys()}
                 if progress_callback:
                     progress_callback(idx, error_result)
@@ -87,6 +104,9 @@ def show_analysis_page():
 
     with col3:
         st.metric("Concurrent Tasks", 50)
+
+    # Add model display to overview
+    st.subheader(f"Selected Model: `{st.session_state.selected_model}`")
 
     # Create results dataframe structure
     result_columns = ["Interaction ID"] + list(config.keys())
@@ -140,8 +160,9 @@ def show_analysis_page():
         # Create semaphore for limiting concurrent tasks
         semaphore = asyncio.Semaphore(50)
 
-        # Get transcripts
+        # Get transcripts and model
         transcripts = df["Transcript"].tolist()
+        model = st.session_state.selected_model
 
         try:
             # Run the async analysis
@@ -150,7 +171,7 @@ def show_analysis_page():
 
             results = loop.run_until_complete(
                 analyze_transcript_batch(
-                    transcripts, config, semaphore, update_progress
+                    transcripts, config, model, semaphore, update_progress
                 )
             )
 
@@ -197,22 +218,12 @@ with st.sidebar:
         st.session_state.password_correct = False
         st.switch_page("main.py")
 
-    # Show analysis stats if available
-    if hasattr(st.session_state, "analysis_results"):
-        st.markdown("### Analysis Stats")
-        analysis_df = st.session_state.analysis_results
-
-        for col in st.session_state.config_data.keys():
-            if col in analysis_df.columns:
-                yes_count = (analysis_df[col] == "✅ Yes").sum()
-                no_count = (analysis_df[col] == "❌ No").sum()
-                error_count = (analysis_df[col] == "⚠️ Error").sum()
-
-                st.write(f"**{col}**:")
-                st.write(f"  ✅ Yes: {yes_count}")
-                st.write(f"  ❌ No: {no_count}")
-                if error_count > 0:
-                    st.write(f"  ⚠️ Errors: {error_count}")
+    st.title("Model Selection")
+    st.selectbox(
+        "Choose a model for analysis:",
+        options=["llama", "gpt4o", "sarvam-m"],
+        key="selected_model",
+    )
 
 
 if __name__ == "__main__":

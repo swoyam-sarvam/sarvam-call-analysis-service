@@ -6,24 +6,23 @@ st.set_page_config(
     page_title="CSV Analyzer - Login",
     page_icon="🔒",
     layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-# Hide the sidebar menu during login
-st.markdown(
-    """
-    <style>
-        [data-testid="collapsedControl"] {
-            display: none
-        }
-    </style>
-""",
-    unsafe_allow_html=True,
+    initial_sidebar_state="expanded",
 )
 
 # Initialize session state
 if "password_correct" not in st.session_state:
     st.session_state["password_correct"] = False
+if "selected_model" not in st.session_state:
+    st.session_state.selected_model = "llama"
+
+# Sidebar for model selection
+with st.sidebar:
+    st.title("Model Selection")
+    st.selectbox(
+        "Choose a model for analysis:",
+        options=["llama", "gpt4o", "sarvam-m"],
+        key="selected_model",
+    )
 
 
 def main():

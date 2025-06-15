@@ -1,6 +1,6 @@
 import asyncio
 import os
-import httpx # type: ignore
+import httpx  # type: ignore
 import json
 import re
 from typing import Dict, Any, Optional
@@ -44,7 +44,8 @@ Rules for response:
 
     return prompt
 
-async def analyze_transcript_with_config(
+
+async def analyze_transcript_with_config_llama(
     transcript: str, config: Dict[str, str]
 ) -> Dict[str, str]:
     """
@@ -70,19 +71,23 @@ async def analyze_transcript_with_config(
         {"role": "user", "content": user_content},
     ]
 
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLAMA_API_KEY}"}
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LLAMA_API_KEY}",
+    }
 
-    data = {"model": "meta/llama-3.1-70b-instruct", "messages": messages, "stream": False}
+    data = {
+        "model": "meta/llama-3.1-70b-instruct",
+        "messages": messages,
+        "stream": False,
+    }
 
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                LLAMA_URL,
-                headers=headers,
-                json=data,
-                timeout=30.0  # Add timeout
+                LLAMA_URL, headers=headers, json=data, timeout=30.0  # Add timeout
             )
-            
+
             if response.status_code == 200:
                 result = response.json()
                 api_response = result["choices"][0]["message"]["content"]
@@ -104,6 +109,131 @@ async def analyze_transcript_with_config(
         print(f"Exception in API call: {str(e)}")
         # Return default "no" for all flags in case of exception
         return {flag: "no" for flag in config.keys()}
+
+
+async def analyze_transcript_with_config_gpt4o(
+    transcript: str, config: Dict[str, str]
+) -> Dict[str, str]:
+    """
+    Analyze a transcript against provided config flags using OpenAI API
+
+    Args:
+        transcript (str): The call transcript to analyze
+        config (Dict[str, str]): Configuration dictionary with flag names as keys and descriptions as values
+
+    Returns:
+        Dict[str, str]: Dictionary with flag names as keys and "yes"/"no" as values
+    """
+
+    # Generate dynamic system prompt based on config
+    system_prompt = generate_system_prompt(config)
+
+    # Prepare user content
+    user_content = f"Transcript: {transcript}"
+
+    # Prepare messages for API call
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LLAMA_API_KEY}",
+    }
+
+    data = {"model": "gpt-4o", "messages": messages, "stream": False}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                LLAMA_URL, headers=headers, json=data, timeout=30.0  # Add timeout
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                api_response = result["choices"][0]["message"]["content"]
+
+                # Extract JSON from response using regex
+                json_result = extract_json_from_response(api_response)
+
+                # Validate that all config keys are present in the result
+                validated_result = validate_response(json_result, config)
+                return validated_result
+
+            else:
+                print(f"Error in API call: {response.status_code}")
+                print(f"Response text: {response.text}")
+                # Return default "no" for all flags in case of API error
+                return {flag: "no" for flag in config.keys()}
+
+    except Exception as e:
+        print(f"Exception in API call: {str(e)}")
+        # Return default "no" for all flags in case of exception
+        return {flag: "no" for flag in config.keys()}
+
+
+async def analyze_transcript_with_config_sarvam(
+    transcript: str, config: Dict[str, str]
+) -> Dict[str, str]:
+    """
+    Analyze a transcript against provided config flags using OpenAI API
+
+    Args:
+        transcript (str): The call transcript to analyze
+        config (Dict[str, str]): Configuration dictionary with flag names as keys and descriptions as values
+
+    Returns:
+        Dict[str, str]: Dictionary with flag names as keys and "yes"/"no" as values
+    """
+
+    # Generate dynamic system prompt based on config
+    system_prompt = generate_system_prompt(config)
+
+    # Prepare user content
+    user_content = f"Transcript: {transcript}"
+
+    # Prepare messages for API call
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LLAMA_API_KEY}",
+    }
+
+    data = {"model": "Sarvam-v1", "messages": messages, "stream": False}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                LLAMA_URL, headers=headers, json=data, timeout=30.0  # Add timeout
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                api_response = result["choices"][0]["message"]["content"]
+
+                # Extract JSON from response using regex
+                json_result = extract_json_from_response(api_response)
+
+                # Validate that all config keys are present in the result
+                validated_result = validate_response(json_result, config)
+                return validated_result
+
+            else:
+                print(f"Error in API call: {response.status_code}")
+                print(f"Response text: {response.text}")
+                # Return default "no" for all flags in case of API error
+                return {flag: "no" for flag in config.keys()}
+
+    except Exception as e:
+        print(f"Exception in API call: {str(e)}")
+        # Return default "no" for all flags in case of exception
+        return {flag: "no" for flag in config.keys()}
+
 
 def extract_json_from_response(response: str) -> Dict[str, str]:
     """
@@ -183,3 +313,28 @@ def validate_response(
 
     return validated_result
 
+
+async def analyze_transcript_with_config(
+    transcript: str, config: Dict[str, str], model: str
+) -> Optional[Dict[str, str]]:
+    """
+    Analyze transcript with the specified model.
+
+    Args:
+        transcript (str): The transcript to analyze.
+        config (Dict[str, str]): The analysis configuration.
+        model (str): The model to use for analysis.
+
+    Returns:
+        Optional[Dict[str, str]]: Analysis result or None if model is unknown.
+    """
+    if model == "llama":
+        return await analyze_transcript_with_config_llama(transcript, config)
+    elif model == "gpt4o":
+        return await analyze_transcript_with_config_gpt4o(transcript, config)
+    elif model == "sarvam-m":
+        return await analyze_transcript_with_config_sarvam(transcript, config)
+    else:
+        # Handle unknown model
+        print(f"Unknown model: {model}")
+        return None

@@ -98,5 +98,12 @@ with st.sidebar:
         st.session_state.password_correct = False
         st.switch_page("main.py")
 
+    st.title("Model Selection")
+    st.selectbox(
+        "Choose a model for analysis:",
+        options=["llama", "gpt4o", "sarvam-m"],
+        key="selected_model",
+    )
+
 if __name__ == "__main__":
     show_config_page()
