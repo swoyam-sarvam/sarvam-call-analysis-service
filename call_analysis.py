@@ -31,7 +31,6 @@ def generate_system_prompt(config: Dict[str, str]) -> str:
         "You are a highly capable AI assistant tasked with analyzing call transcripts. "
         "Your goal is to extract detailed, accurate, and contextually relevant information "
         "for each of the following criteria. For each flag, provide a direct answer as specified "
-        "in the description, not just a 'yes' or 'no'.\n\n"
         "Instructions:\n"
         "- Carefully read the transcript and evaluate each flag based on its description.\n"
         "- For each flag, provide the answer in the format and detail requested in the description.\n"
@@ -121,20 +120,18 @@ async def analyze_transcript_with_config_llama(
                 # Extract JSON from response using regex
                 json_result = extract_json_from_response(api_response)
 
-                # Validate that all config keys are present in the result
-                validated_result = validate_response(json_result, config)
-                return validated_result
+                return json_result
 
             else:
                 print(f"Error in API call: {response.status_code}")
                 print(f"Response text: {response.text}")
-                # Return default "no" for all flags in case of API error
-                return {flag: "no" for flag in config.keys()}
+                # Return default "failed" for all flags in case of API error
+                return {flag: "failed" for flag in config.keys()}
 
     except Exception as e:
         print(f"Exception in API call: {str(e)}")
-        # Return default "no" for all flags in case of exception
-        return {flag: "no" for flag in config.keys()}
+        # Return default "failed" for all flags in case of exception
+        return {flag: "failed" for flag in config.keys()}
 
 
 async def analyze_transcript_with_config_gpt4o(
@@ -180,19 +177,17 @@ async def analyze_transcript_with_config_gpt4o(
                 # Extract JSON from response using regex
                 json_result = extract_json_from_response(api_response)
 
-                # Validate that all config keys are present in the result
-                validated_result = validate_response(json_result, config)
-                return validated_result
+                return json_result
 
             else:
                 print(f"Error in API call: {response.status_code}")
-                # Return default "no" for all flags in case of API error
-                return {flag: "no" for flag in config.keys()}
+                # Return default "failed" for all flags in case of API error
+                return {flag: "failed" for flag in config.keys()}
 
     except Exception as e:
         print(f"Exception in API call: {str(e)}")
-        # Return default "no" for all flags in case of exception
-        return {flag: "no" for flag in config.keys()}
+        # Return default "failed" for all flags in case of exception
+        return {flag: "failed" for flag in config.keys()}
 
 
 async def analyze_transcript_with_config_sarvam(
@@ -244,21 +239,19 @@ async def analyze_transcript_with_config_sarvam(
                 # Extract JSON from response using regex
                 json_result = extract_json_from_response(api_response)
 
-                # Validate that all config keys are present in the result
-                validated_result = validate_response(json_result, config)
                 await asyncio.sleep(30)
-                return validated_result
+                return json_result
 
             else:
                 print(f"Error in API call: {response.status_code}")
                 print(f"Response text: {response.text}")
-                # Return default "no" for all flags in case of API error
-                return {flag: "no" for flag in config.keys()}
+                # Return default "failed" for all flags in case of API error
+                return {flag: "failed" for flag in config.keys()}
 
     except Exception as e:
         print(f"Exception in API call: {str(e)}")
-        # Return default "no" for all flags in case of exception
-        return {flag: "no" for flag in config.keys()}
+        # Return default "failed" for all flags in case of exception
+        return {flag: "failed" for flag in config.keys()}
 
 
 def extract_json_from_response(response: str) -> Dict[str, str]:

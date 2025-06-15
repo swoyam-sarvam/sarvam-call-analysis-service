@@ -135,13 +135,7 @@ def show_analysis_page():
         # Update the results dataframe
         for key, value in result.items():
             if key in results_df.columns:
-                # Use emojis for better visual feedback
-                display_value = (
-                    "🔴"
-                    if value.lower() == "yes"
-                    else "💚" if value.lower() == "no" else "⚠️"
-                )
-                results_df.loc[idx, key] = display_value
+                results_df.loc[idx, key] = value
 
         # Update progress
         progress = completed_count / len(df)
