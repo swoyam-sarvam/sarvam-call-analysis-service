@@ -205,18 +205,21 @@ async def analyze_transcript_with_config_sarvam(
     ]
 
     headers = {
+        "api-subscription-key": SARVAM_API_KEY,  # Use correct subscription key
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {LLAMA_API_KEY}",
     }
 
-    data = {"model": "Sarvam-v1", "messages": messages, "stream": False}
+    data = {"model": "sarvam-m", "messages": messages}
 
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                LLAMA_URL, headers=headers, json=data, timeout=30.0  # Add timeout
+                SARVAM_URL,
+                headers=headers,
+                json=data,
+                timeout=30.0  # Add timeout
             )
-
+            
             if response.status_code == 200:
                 result = response.json()
                 api_response = result["choices"][0]["message"]["content"]
@@ -226,6 +229,7 @@ async def analyze_transcript_with_config_sarvam(
 
                 # Validate that all config keys are present in the result
                 validated_result = validate_response(json_result, config)
+                await asyncio.sleep(30)
                 return validated_result
 
             else:
