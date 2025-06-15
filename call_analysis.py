@@ -147,18 +147,15 @@ async def analyze_transcript_with_config_gpt4o(
     ]
 
     headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {LLAMA_API_KEY}",
     }
 
-    data = {"model": "gpt-4o", "messages": messages, "stream": False}
+    data = {"model": "gpt-4o", "messages": messages, "temperature": 0}
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                LLAMA_URL, headers=headers, json=data, timeout=30.0  # Add timeout
-            )
-
+            response = await client.post(OPENAI_URL, headers=headers, json=data)
             if response.status_code == 200:
                 result = response.json()
                 api_response = result["choices"][0]["message"]["content"]
@@ -172,7 +169,6 @@ async def analyze_transcript_with_config_gpt4o(
 
             else:
                 print(f"Error in API call: {response.status_code}")
-                print(f"Response text: {response.text}")
                 # Return default "no" for all flags in case of API error
                 return {flag: "no" for flag in config.keys()}
 
