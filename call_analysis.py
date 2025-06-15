@@ -23,33 +23,50 @@ LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "none")
 
 
 def generate_system_prompt(config: Dict[str, str]) -> str:
-    """Generate system prompt dynamically based on config"""
-    prompt = """You are an AI assistant analyzing call transcripts for various flags based on the provided configuration.
-
-Please analyze the transcript according to these specific criteria:
-
-"""
+    """
+    Generate an improved system prompt for the AI assistant to analyze call transcripts
+    and provide answers as per the description in the config, not just "yes" or "no".
+    """
+    prompt = (
+        "You are a highly capable AI assistant tasked with analyzing call transcripts. "
+        "Your goal is to extract detailed, accurate, and contextually relevant information "
+        "for each of the following criteria. For each flag, provide a direct answer as specified "
+        "in the description, not just a 'yes' or 'no'.\n\n"
+        "Instructions:\n"
+        "- Carefully read the transcript and evaluate each flag based on its description.\n"
+        "- For each flag, provide the answer in the format and detail requested in the description.\n"
+        "- If the answer is not present or cannot be determined, respond with 'Not found' or an appropriate message as per the flag's requirement.\n"
+        "- Return ONLY a valid JSON object as your response, with no extra commentary or formatting.\n"
+        "- Be concise, accurate, and strictly follow the requirements for each flag.\n\n"
+        "Criteria and expected answers:\n"
+    )
 
     for flag_name, description in config.items():
-        prompt += f"{flag_name}: {description}\n\n"
+        prompt += f"- {flag_name}: {description}\n"
 
-    prompt += """
-Analyze the transcript provided and return a JSON response with the following format:
-{
-"""
+    prompt += (
+        "\nAfter analyzing the transcript, respond with a JSON object in the following format:\n"
+        "{\n"
+    )
 
-    for flag_name in config.keys():
-        prompt += f'    "{flag_name}": "yes" or "no",\n'
+    for flag_name, description in config.items():
+        prompt += f'    "{flag_name}": <answer as per description>,\n'
 
     prompt = prompt.rstrip(",\n") + "\n}"
 
-    prompt += """
+    prompt += (
+        "\n\nExample:\n"
+        "{\n"
+    )
+    for flag_name, description in config.items():
+        prompt += f'    "{flag_name}": "<example answer as per description>",\n'
+    prompt = prompt.rstrip(",\n") + "\n}\n"
 
-Rules for response:
-- Return ONLY the JSON object, no additional text
-- Use "yes" if the flag condition is met, "no" if it's not
-- Be precise in your analysis based on the exact criteria provided
-"""
+    prompt += (
+        "\nRemember:\n"
+        "- Do NOT include any explanations, markdown, or extra text.\n"
+        "- Only output the JSON object as specified above.\n"
+    )
 
     return prompt
 
